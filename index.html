@@ -621,13 +621,58 @@ function renderShowSc() {
   c.innerHTML = s.pads.map(function(p, i) {
     var recs = p.records || [];
     var filled = recs.length;
-    var dots = Array.from({ length: p.total }, function(_, j) {
-      return '<div style="width:26px;height:26px;border-radius:50%;border:2px solid ' +
-        (j < filled ? 'var(--navy)' : 'var(--brd)') +
-        ';display:inline-flex;align-items:center;justify-content:center;font-size:13px;background:' +
-        (j < filled ? 'var(--pll)' : 'var(--sur)') + ';">' +
-        (j < filled ? p.emoji : '') + '</div>';
-    }).join('');
+    var dots = Array.from(
+  { length: p.total },
+  function(_, j) {
+
+    var filledStamp =
+      j < filled;
+
+    var clickAttr = '';
+
+    if(filledStamp){
+
+      clickAttr =
+        'onclick="event.stopPropagation();openStampRecord(' +
+        db.shows.indexOf(s) +
+        ',' +
+        i +
+        ',' +
+        j +
+        ')"';
+    }
+
+    return '<div ' +
+
+      clickAttr +
+
+      ' style="width:26px;height:26px;border-radius:50%;border:2px solid ' +
+
+      (filledStamp
+        ? 'var(--navy)'
+        : 'var(--brd)') +
+
+      ';display:inline-flex;align-items:center;justify-content:center;font-size:13px;background:' +
+
+      (filledStamp
+        ? 'var(--pll)'
+        : 'var(--sur)') +
+
+      ';cursor:' +
+
+      (filledStamp
+        ? 'pointer'
+        : 'default') +
+
+      ';">' +
+
+      (filledStamp
+        ? p.emoji
+        : '') +
+
+      '</div>';
+  }
+).join('');
     var rewText = p.rewards.map(function(r) { return r.n + '회 → ' + r.label; }).join(' · ') || '혜택 미설정';
     return '<div class="card">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;" onclick="goDet(\'' + curShow + '\',' + i + ')">' +
@@ -841,6 +886,7 @@ function renderDet() {
 
 let stampCnt = 1;
 let recordStampCnt = 1;
+let selectedStampRecord = null;
 function selectStampCnt(btn, n) {
   stampCnt = n;
   document.querySelectorAll('#stamp-cnt-row .tgl').forEach(function(b) { b.classList.remove('on'); });
@@ -1300,7 +1346,7 @@ function renderCal() {
         (p.records || []).forEach(function(r){
 
           if(r.date !== ds) return;
-          if(!r.calendar) return;
+          if(!r.calendar === false) return;
           var key =
             s.name + '_' + r.time;
 
@@ -1404,7 +1450,172 @@ function renderCal() {
   document.getElementById('cal-grid').innerHTML =
     html;
 }
+function openStampRecord(si, pi, ri){
 
+  const s = db.shows[si];
+
+  if(!s) return;
+
+  const p = s.pads[pi];
+
+  if(!p) return;
+
+  const r = p.records[ri];
+
+  if(!r) return;
+
+  selectedStampRecord = {
+    si,
+    pi,
+    ri
+  };
+
+  document.getElementById(
+    'stamp-detail-body'
+  ).innerHTML = `
+
+    <div style="line-height:1.8;">
+
+      <div
+        style="
+          font-size:20px;
+          font-weight:800;
+          margin-bottom:8px;
+        "
+      >
+        ${s.name}
+      </div>
+
+      <div>
+        📅 ${r.date}
+      </div>
+
+      <div>
+        ${
+          r.time === 'night'
+            ? '🌙 밤공'
+            : '🌤 낮공'
+        }
+      </div>
+
+      <div>
+        🎟 ${
+          r.multi === 3
+            ? '트리플 적립'
+            : r.multi === 2
+            ? '더블 적립'
+            : '일반 적립'
+        }
+      </div>
+
+      ${
+        r.memo
+          ? `
+            <div>
+              📝 ${r.memo}
+            </div>
+          `
+          : ''
+      }
+
+    </div>
+  `;
+
+  document
+    .getElementById(
+      'stamp-delete-btn'
+    )
+    .onclick =
+      deleteStampRecord;
+
+  document
+    .getElementById(
+      'stamp-edit-btn'
+    )
+    .onclick =
+      editStampRecord;
+
+  openModal('m-stamp-detail');
+}
+
+function deleteStampRecord(){
+
+  if(!selectedStampRecord)
+    return;
+
+  const {
+    si,
+    pi,
+    ri
+  } = selectedStampRecord;
+
+  if(
+    !confirm(
+      '이 기록을 삭제할까요?'
+    )
+  ) return;
+
+  db.shows[si]
+    .pads[pi]
+    .records
+    .splice(ri, 1);
+
+  save();
+
+  closeModal('m-stamp-detail');
+
+  renderHome();
+
+  renderShowSc();
+
+  renderB('all');
+
+  initCal();
+}
+
+function editStampRecord(){
+
+  if(!selectedStampRecord)
+    return;
+
+  const {
+    si,
+    pi,
+    ri
+  } = selectedStampRecord;
+
+  const r =
+    db.shows[si]
+      .pads[pi]
+      .records[ri];
+
+  const memo =
+    prompt(
+      '메모 수정',
+      r.memo || ''
+    );
+
+  if(memo === null)
+    return;
+
+  r.memo = memo;
+
+  save();
+
+  openStampRecord(
+    si,
+    pi,
+    ri
+  );
+
+  renderHome();
+
+  renderShowSc();
+
+  renderB('all');
+
+  initCal();
+}
 // ════════════════════════════════════════
 // 혜택
 // ════════════════════════════════════════
@@ -1535,5 +1746,40 @@ document.querySelector('#sc-cal .actbtn').addEventListener('click', openRecordMo
 renderHome();
 initCal();
 </script>
+  <div class="ov" id="m-stamp-detail">
+
+  <div class="sheet">
+
+    <h3>관람 기록</h3>
+
+    <div id="stamp-detail-body"></div>
+
+    <button
+      class="btn"
+      id="stamp-edit-btn"
+      style="margin-top:12px;"
+    >
+      수정
+    </button>
+
+    <button
+      class="btn danger"
+      id="stamp-delete-btn"
+      style="margin-top:8px;"
+    >
+      삭제
+    </button>
+
+    <button
+      class="btn ghost"
+      onclick="closeModal('m-stamp-detail')"
+      style="margin-top:8px;"
+    >
+      닫기
+    </button>
+
+  </div>
+
+</div>
 </body>
 </html>
