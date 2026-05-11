@@ -1336,6 +1336,7 @@ function renderCal() {
       String(calM + 1).padStart(2, '0') +
       '-' +
       String(d).padStart(2, '0');
+    var isToday = (ds === td);
 
     var uniqueMap = {};
 
