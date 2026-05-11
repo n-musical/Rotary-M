@@ -1342,12 +1342,12 @@ function renderCal() {
 
     db.shows.forEach(function(s, si){
 
-      s.pads.forEach(function(p){
+      s.pads.forEach(function(p, pi){
 
         (p.records || []).forEach(function(r, ri){
 
           if(r.date !== ds) return;
-          if(!r.calendar === false) return;
+          if(!r.calendar) return;
           var key =
             s.name + '_' + r.time;
 
