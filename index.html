@@ -1453,91 +1453,43 @@ function renderCal() {
 function openStampRecord(si, pi, ri){
 
   const s = db.shows[si];
-
-  if(!s) return;
-
   const p = s.pads[pi];
-
-  if(!p) return;
-
   const r = p.records[ri];
 
   if(!r) return;
 
-  selectedStampRecord = {
-    si,
-    pi,
-    ri
-  };
+  selectedStampRecord = { si, pi, ri };
 
-  document.getElementById(
-    'stamp-detail-body'
-  ).innerHTML = `
-
+  document.getElementById('stamp-detail-body').innerHTML = `
     <div style="line-height:1.8;">
 
-      <div
-        style="
-          font-size:20px;
-          font-weight:800;
-          margin-bottom:8px;
-        "
-      >
+      <div style="font-size:20px;font-weight:800;">
         ${s.name}
       </div>
 
-      <div>
-        📅 ${r.date}
-      </div>
+      <div>📅 ${r.date}</div>
 
-      <div>
-        ${
-          r.time === 'night'
-            ? '🌙 밤공'
-            : '🌤 낮공'
-        }
-      </div>
+      <div>${r.time === 'night' ? '🌙 밤공' : '🌤 낮공'}</div>
 
       <div>
         🎟 ${
-          r.multi === 3
-            ? '트리플 적립'
-            : r.multi === 2
-            ? '더블 적립'
-            : '일반 적립'
+          r.multi === 3 ? '트리플 적립' :
+          r.multi === 2 ? '더블 적립' :
+          '일반 적립'
         }
       </div>
 
-      ${
-        r.memo
-          ? `
-            <div>
-              📝 ${r.memo}
-            </div>
-          `
-          : ''
-      }
+      ${r.memo ? `<div>📝 ${r.memo}</div>` : ''}
 
     </div>
   `;
 
-  document
-    .getElementById(
-      'stamp-delete-btn'
-    )
-    .onclick =
-      deleteStampRecord;
+  document.getElementById('stamp-delete-btn').onclick = deleteStampRecord;
+  document.getElementById('stamp-edit-btn').onclick = editStampRecord;
 
-  document
-    .getElementById(
-      'stamp-edit-btn'
-    )
-    .onclick =
-      editStampRecord;
-
-  
+  // ⭐ 핵심: 새 모달 열기
+  openModal('m-stamp-detail');
 }
-
 function deleteStampRecord(){
 
   if(!selectedStampRecord)
