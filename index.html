@@ -1,5 +1,42 @@
 <!DOCTYPE html>
 <html lang="ko">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.css">
+
+<script type="module">
+import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js';
+</script>
+
+<style>
+#sc-benefit{
+  padding-top: env(safe-area-inset-top);
+}
+
+emoji-picker{
+  width:100%;
+  height:320px;
+  border-radius:14px;
+  margin-bottom:14px;
+}
+
+.calposters{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.calposter{
+  width:100%;
+  border-radius:4px;
+  padding:2px 4px;
+  font-size:9px;
+  color:white;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+</style>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -253,7 +290,22 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
       <button class="cb" onclick="changeCnt(1)">+</button>
     </div>
     <label class="lbl">도장 모양</label>
-    <div class="epwrap"><div class="epgrid" id="ep-grid"></div></div>
+    <div style="margin-bottom:14px;">
+
+  <div
+    id="selected-emoji"
+    style="
+      font-size:40px;
+      text-align:center;
+      margin-bottom:10px;
+    "
+  >
+    🎭
+  </div>
+
+  <emoji-picker id="emoji-picker"></emoji-picker>
+
+</div>
     <label class="lbl">혜택 구간 설정</label>
     <div id="rew-rows"></div>
     <button class="addrb" onclick="addRewRow('rew-rows')">+ 혜택 구간 추가</button>
@@ -316,12 +368,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 <div class="ov" id="m-record">
   <div class="modal">
     <h3>관람 등록</h3>
-    <label class="lbl">포스터 / 사진</label>
-    <div class="phup" id="photo-area" onclick="document.getElementById('photo-input').click()">
-      <div style="font-size:32px;">📷</div>
-      <div style="font-size:13px;color:var(--mu);margin-top:8px;">탭하여 사진 선택</div>
-    </div>
-    <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="previewPhoto(this)">
     <label class="lbl">공연 선택</label>
     <select class="inp" id="r-show" onchange="updatePadSel()"></select>
     <label class="lbl">도장판 선택</label>
@@ -333,6 +379,26 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
       <button class="tgl on" id="r-day" onclick="setTime('rec','day')">🌤 낮공</button>
       <button class="tgl" id="r-night" onclick="setTime('rec','night')">🌙 밤공</button>
     </div>
+    <label class="lbl">적립 방식</label>
+
+<div class="trow" id="record-cnt-row">
+
+  <button class="tgl on"
+  onclick="selectRecordCnt(this,1)">
+    일반 ×1
+  </button>
+
+  <button class="tgl"
+  onclick="selectRecordCnt(this,2)">
+    더블 ×2
+  </button>
+
+  <button class="tgl"
+  onclick="selectRecordCnt(this,3)">
+    트리플 ×3
+  </button>
+
+</div>
     <label class="lbl">티켓 가격</label>
     <input class="inp" type="number" id="r-price" placeholder="예) 99000">
     <label class="lbl">한줄 감상 (선택)</label>
@@ -365,16 +431,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 // ════════════════════════════════════════
 // 이모지 목록
 // ════════════════════════════════════════
-const EMOJIS = [
-  '🎭','🎪','🎬','🎨','🎧','🎵','🎶','🎤','🎹','🎸','🎺','🎻','🥁','🎷',
-  '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💗','💓','💞','💕','💖','💝','💘','💟','❣️',
-  '⭐','🌟','✨','💫','🌠','🌌','🌃','🌙','🌛','🌜','☀️','🌤️','⚡','🔥','🌈',
-  '🌸','🌺','🌻','🌹','🌷','💐','🌼','🪷','🍀','🌿','🍃','🌱','🪴','🌲','🍁','🍂',
-  '🦋','🐱','🐶','🐰','🦊','🐻','🐼','🐨','🦁','🐯','🐸','🐧','🦄','🐝','🦩','🐬',
-  '🍓','🍑','🍒','🍰','🎂','🧁','🍫','🍭','🍬','🍩','🍪','🧋','🫐','🍇','🍉',
-  '💎','🔮','🪄','🎁','🎀','🎊','🎉','🏆','🥇','🎯','🧸','🪆','💌','📿','🕯️',
-  '🌊','🏔️','🌝','🍄','🫧','🪐','🌍','🗝️','🔑','🧩','🎠','🎡','🫶','👑','🌞',
-];
 const COLORS = ['#4a3580','#1a4060','#5c2a10','#1f5040','#5c3a00','#3a1f60','#8b2252'];
 
 // ════════════════════════════════════════
@@ -425,17 +481,33 @@ function today() { return new Date().toISOString().split('T')[0]; }
 // ════════════════════════════════════════
 // 이모지 픽커
 // ════════════════════════════════════════
-function initEpicker() {
-  var g = document.getElementById('ep-grid');
-  g.innerHTML = EMOJIS.map(function(e) {
-    return '<div class="ep' + (e === selEmoji ? ' on' : '') + '" onclick="pickEmoji(this,\'' + e + '\')">' + e + '</div>';
-  }).join('');
-}
+function initEpicker(){
 
-function pickEmoji(el, e) {
-  selEmoji = e;
-  document.querySelectorAll('#ep-grid .ep').forEach(function(ep) { ep.classList.remove('on'); });
-  el.classList.add('on');
+  const picker =
+    document.getElementById('emoji-picker');
+
+  const preview =
+    document.getElementById('selected-emoji');
+
+  if(!picker.dataset.bound){
+
+    picker.addEventListener(
+      'emoji-click',
+      e=>{
+
+        selEmoji =
+          e.detail.unicode;
+
+        preview.textContent =
+          selEmoji;
+      }
+    );
+
+    picker.dataset.bound = '1';
+  }
+
+  preview.textContent =
+    selEmoji;
 }
 
 // ════════════════════════════════════════
@@ -649,12 +721,50 @@ function savePad() {
 }
 
 function deletePad(idx) {
-  if (!confirm('도장판 #' + (idx+1) + '을 삭제할까요?\n찍힌 도장 기록도 모두 삭제됩니다.')) return;
-  var s = getShow(curShow);
+
+  if (
+    !confirm(
+      '도장판 #' +
+      (idx + 1) +
+      '을 삭제할까요?\n\n연결된 혜택도 함께 삭제됩니다.'
+    )
+  ) return;
+
+  var s =
+    getShow(curShow);
+
   if (!s) return;
+
+  db.manualB =
+    db.manualB.filter(function(b){
+
+      return !(
+
+        b.sid === curShow &&
+        b.pi === idx
+
+      );
+    });
+
   s.pads.splice(idx, 1);
+
+  db.manualB.forEach(function(b){
+
+    if(
+
+      b.sid === curShow &&
+      b.pi > idx
+
+    ){
+      b.pi--;
+    }
+  });
+
   save();
+
   renderShowSc();
+
+  renderB('all');
 }
 
 // ════════════════════════════════════════
@@ -717,13 +827,26 @@ function renderDet() {
 }
 
 let stampCnt = 1;
-
+let recordStampCnt = 1;
 function selectStampCnt(btn, n) {
   stampCnt = n;
   document.querySelectorAll('#stamp-cnt-row .tgl').forEach(function(b) { b.classList.remove('on'); });
   btn.classList.add('on');
 }
+function selectRecordCnt(btn, n){
 
+  recordStampCnt = n;
+
+  document
+    .querySelectorAll(
+      '#record-cnt-row .tgl'
+    )
+    .forEach(b=>{
+      b.classList.remove('on');
+    });
+
+  btn.classList.add('on');
+}
 // ════════════════════════════════════════
 // 도장 찍기
 // ════════════════════════════════════════
@@ -848,28 +971,225 @@ function updatePadSel() {
 }
 
 function addRecord() {
-  var sid = document.getElementById('r-show').value;
-  var pi = parseInt(document.getElementById('r-pad').value);
-  var date = document.getElementById('r-date').value;
-  var price = parseInt(document.getElementById('r-price').value) || 0;
-  var memo = document.getElementById('r-memo').value.trim();
-  if (!sid || isNaN(pi) || !date) { alert('필수 항목을 입력해주세요'); return; }
+
+  var sid =
+    document.getElementById('r-show').value;
+
+  var pi =
+    parseInt(
+      document.getElementById('r-pad').value
+    );
+
+  var date =
+    document.getElementById('r-date').value;
+
+  var price =
+    parseInt(
+      document.getElementById('r-price').value
+    ) || 0;
+
+  var memo =
+    document.getElementById('r-memo').value.trim();
+
+  if (!sid || isNaN(pi) || !date) {
+
+    alert('필수 항목을 입력해주세요');
+
+    return;
+  }
+
   var s = getShow(sid);
-  var p = s && s.pads[pi];
-  if (!p) return;
-  if (!p.records) p.records = [];
-  if (p.records.length >= p.total) { alert('도장판이 이미 완성됐어요!'); return; }
-  p.records.push({ date: date, time: times.rec, price: price, memo: memo, photo: photoData });
+
+  if(!s) return;
+
+  var p = s.pads[pi];
+
+  if(!p) return;
+
+  if(!p.records)
+    p.records = [];
+
+  let remaining =
+    p.total - p.records.length;
+
+  let toAdd =
+    Math.min(recordStampCnt, remaining);
+
+  for(let i=0;i<toAdd;i++){
+
+    p.records.push({
+      date: date,
+      time: times.rec,
+      price: price,
+      memo: memo,
+      multi: recordStampCnt
+    });
+
+  }
+
   checkRewards(sid, pi);
+
+  let overflow =
+    recordStampCnt - toAdd;
+
+  if(overflow > 0){
+
+    const createNew =
+      confirm(
+        '현재 도장판이 가득 찼어요.\n\n새 도장판을 자동 생성할까요?'
+      );
+
+    if(createNew){
+
+      const newPad = {
+
+        total: p.total,
+
+        emoji: p.emoji,
+
+        rewards:
+          JSON.parse(
+            JSON.stringify(p.rewards)
+          ),
+
+        records: []
+      };
+
+      for(let j=0;j<overflow;j++){
+
+        newPad.records.push({
+          date: date,
+          time: times.rec,
+          price: price,
+          memo: memo,
+          multi: recordStampCnt
+        });
+
+      }
+
+      s.pads.push(newPad);
+
+      checkRewards(
+        sid,
+        s.pads.length - 1
+      );
+
+      alert(
+        '새 도장판 #' +
+        s.pads.length +
+        ' 생성 완료!'
+      );
+
+    } else {
+
+      const availablePads =
+
+        s.pads
+          .map((pad, idx)=>({
+
+            idx,
+
+            remain:
+              pad.total -
+              (pad.records || []).length
+
+          }))
+          .filter(v=>v.remain > 0);
+
+      if(!availablePads.length){
+
+        alert(
+          '남은 칸이 있는 도장판이 없어요.'
+        );
+
+      } else {
+
+        const text =
+          availablePads
+            .map(v=>
+              `${v.idx + 1}번`
+            )
+            .join(', ');
+
+        const choice =
+          prompt(
+            `남은 도장판 번호 입력\n(${text})`
+          );
+
+        const selected =
+          parseInt(choice) - 1;
+
+        const target =
+          s.pads[selected];
+
+        if(target){
+
+          if(!target.records)
+            target.records = [];
+
+          for(let k=0;k<overflow;k++){
+
+            if(
+              target.records.length >=
+              target.total
+            ) break;
+
+            target.records.push({
+
+              date: date,
+
+              time: times.rec,
+
+              price: price,
+
+              memo: memo,
+
+              multi: recordStampCnt
+
+            });
+
+          }
+
+          checkRewards(
+            sid,
+            selected
+          );
+        }
+      }
+    }
+  }
+
   save();
+
   closeModal('m-record');
-  photoData = null;
-  document.getElementById('photo-area').innerHTML = '<div style="font-size:32px;">📷</div><div style="font-size:13px;color:var(--mu);margin-top:8px;">탭하여 사진 선택</div>';
+
   document.getElementById('r-price').value = '';
+
   document.getElementById('r-memo').value = '';
+
+  recordStampCnt = 1;
+
+  document
+    .querySelectorAll(
+      '#record-cnt-row .tgl'
+    )
+    .forEach((b,i)=>{
+
+      b.classList.toggle(
+        'on',
+        i===0
+      );
+    });
+
   renderHome();
+
+  renderShowSc();
+
+  renderB('all');
+
   initCal();
-  alert('✓ 등록됐어요! (' + p.records.length + '/' + p.total + ')');
+
+  alert('✓ 관람 등록 완료!');
 }
 
 function checkRewards(sid, pi) {
@@ -920,16 +1240,153 @@ function changeMonth(d) {
 }
 
 function renderCal() {
-  document.getElementById('cal-label').textContent = calY + '년 ' + (calM + 1) + '월';
-  var first = new Date(calY, calM, 1).getDay();
-  var days = new Date(calY, calM + 1, 0).getDate();
-  var prev = new Date(calY, calM, 0).getDate();
+
+  document.getElementById('cal-label').textContent =
+    calY + '년 ' + (calM + 1) + '월';
+
+  var first =
+    new Date(calY, calM, 1).getDay();
+
+  var days =
+    new Date(calY, calM + 1, 0).getDate();
+
+  var prev =
+    new Date(calY, calM, 0).getDate();
+
   var td = today();
+
   var html = '';
 
   for (var i = 0; i < first; i++) {
-    html += '<div class="calcell faded"><div class="calnum">' + (prev - first + 1 + i) + '</div></div>';
+
+    html +=
+      '<div class="calcell faded">' +
+      '<div class="calnum">' +
+      (prev - first + 1 + i) +
+      '</div></div>';
   }
+
+  for (var d = 1; d <= days; d++) {
+
+    var ds =
+      calY + '-' +
+      String(calM + 1).padStart(2, '0') +
+      '-' +
+      String(d).padStart(2, '0');
+
+    var uniqueMap = {};
+
+    db.shows.forEach(function(s, si){
+
+      s.pads.forEach(function(p){
+
+        (p.records || []).forEach(function(r){
+
+          if(r.date !== ds) return;
+
+          var key =
+            s.name + '_' + r.time;
+
+          if(!uniqueMap[key]){
+
+            uniqueMap[key] = {
+
+              show: s.name,
+
+              time: r.time,
+
+              color:
+                COLORS[
+                  si % COLORS.length
+                ]
+            };
+          }
+        });
+      });
+    });
+
+    var recs =
+      Object.values(uniqueMap);
+
+    recs.sort(function(a,b){
+
+      if(a.time === b.time)
+        return 0;
+
+      return a.time === 'day'
+        ? -1
+        : 1;
+    });
+
+    var posHtml = '';
+
+    if(recs.length){
+
+      posHtml =
+        '<div class="calposters">' +
+
+        recs.map(function(item){
+
+          return `
+
+            <div
+              class="calposter"
+              style="background:${item.color};"
+            >
+
+              ${item.time === 'day'
+                ? '🌤'
+                : '🌙'}
+
+              ${item.show}
+
+            </div>
+          `;
+        }).join('')
+
+        +
+
+        '</div>';
+    }
+
+    html +=
+
+      '<div class="calcell' +
+
+      (ds === td
+        ? ' today'
+        : '') +
+
+      '">' +
+
+      '<div class="calnum">' +
+      d +
+      '</div>' +
+
+      posHtml +
+
+      '</div>';
+  }
+
+  var rem =
+    42 - first - days;
+
+  for (var j = 1; j <= rem; j++) {
+
+    html +=
+
+      '<div class="calcell faded">' +
+
+      '<div class="calnum">' +
+
+      j +
+
+      '</div></div>';
+  }
+
+  document.getElementById('cal-grid').innerHTML =
+    html;
+}
 
   for (var d = 1; d <= days; d++) {
     var ds = calY + '-' + String(calM + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
