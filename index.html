@@ -1288,171 +1288,74 @@ function openRecordModal() {
 // ════════════════════════════════════════
 // 캘린더
 // ════════════════════════════════════════
-function initCal() {
-  var n = new Date();
-  calY = n.getFullYear();
-  calM = n.getMonth();
-  renderCal();
-}
-
-function changeMonth(d) {
-  calM += d;
-  if (calM > 11) { calM = 0; calY++; }
-  if (calM < 0) { calM = 11; calY--; }
-  renderCal();
-}
-
 function renderCal() {
-
   document.getElementById('cal-label').textContent =
     calY + '년 ' + (calM + 1) + '월';
-
-  var first =
-    new Date(calY, calM, 1).getDay();
-
-  var days =
-    new Date(calY, calM + 1, 0).getDate();
-
-  var prev =
-    new Date(calY, calM, 0).getDate();
-
+  var first = new Date(calY, calM, 1).getDay();
+  var days = new Date(calY, calM + 1, 0).getDate();
+  var prev = new Date(calY, calM, 0).getDate();
   var td = today();
-
   var html = '';
 
   for (var i = 0; i < first; i++) {
-
-    html +=
-      '<div class="calcell faded">' +
-      '<div class="calnum">' +
-      (prev - first + 1 + i) +
-      '</div></div>';
+    html += '<div class="calcell faded"><div class="calnum">' +
+      (prev - first + 1 + i) + '</div></div>';
   }
 
   for (var d = 1; d <= days; d++) {
-
-    var ds =
-      calY + '-' +
-      String(calM + 1).padStart(2, '0') +
-      '-' +
+    var ds = calY + '-' +
+      String(calM + 1).padStart(2, '0') + '-' +
       String(d).padStart(2, '0');
     var isToday = (ds === td);
-
     var uniqueMap = {};
 
-    db.shows.forEach(function(s, si){
-
-      s.pads.forEach(function(p, pi){
-
-        (p.records || []).forEach(function(r, ri){
-
-          if(r.date !== ds) return;
-          if(!r.calendar) return;
-          var key =
-            s.name + '_' + r.time;
-
-          if(!uniqueMap[key]){
-
+    db.shows.forEach(function(s, si) {
+      s.pads.forEach(function(p, pi) {
+        (p.records || []).forEach(function(r, ri) {
+          if (r.date !== ds) return;
+          if (!r.calendar) return;
+          var key = s.name + '_' + r.time;
+          if (!uniqueMap[key]) {
             uniqueMap[key] = {
-
               show: s.name,
-
               time: r.time,
-
-              color:
-                COLORS[
-                  db.shows.indexOf(s) % COLORS.length
-                ], // ⭐ 추가 (핵심)
-  si: si,
-  pi: pi,
-  ri: ri
+              color: COLORS[db.shows.indexOf(s) % COLORS.length],
+              si: si, pi: pi, ri: ri
             };
           }
         });
       });
     });
 
-    var recs =
-      Object.values(uniqueMap);
-
-    recs.sort(function(a,b){
-
-      if(a.time === b.time)
-        return 0;
-
-      return a.time === 'day'
-        ? -1
-        : 1;
+    var recs = Object.values(uniqueMap);
+    recs.sort(function(a, b) {
+      if (a.time === b.time) return 0;
+      return a.time === 'day' ? -1 : 1;
     });
 
     var posHtml = '';
-
-    if(recs.length){
-
-      posHtml =
-        '<div class="calposters">' +
-
-       recs.map(function(item){
-  return '<div class="calposter" style="background:'+item.color+';" onclick="openCalEdit('+item.si+','+item.pi+','+item.ri+')"></div>';
-})
-          return `
-
-            <div
-              class="calposter"
-              style="background:${item.color};"
-            >
-
-              ${item.time === 'day'
-                ? '🌤'
-                : '🌙'}
-
-              ${item.show}
-
-            </div>
-          `;
-        }).join('')
-
-        +
-
+    if (recs.length) {
+      posHtml = '<div class="calposters">' +
+        recs.map(function(item) {
+          return '<div class="calposter" style="background:' + item.color + ';" onclick="openCalEdit(' + item.si + ',' + item.pi + ',' + item.ri + ')">' +
+            (item.time === 'day' ? '🌤 ' : '🌙 ') +
+            item.show +
+            '</div>';
+        }).join('') +
         '</div>';
     }
 
-    html += '<div class="calcell' +
-(isToday ? ' today' : '') +
-  '">';
-      (ds === td
-        ? ' today'
-        : '') +
-
-      '">' +
-
-      '<div class="calnum">' +
-      d +
-      '</div>' +
-
-      posHtml +
-
-      '</div>';
+    html += '<div class="calcell' + (isToday ? ' today' : '') + '">' +
+      '<div class="calnum">' + d + '</div>' +
+      posHtml + '</div>';
   }
 
-  var rem =
-    42 - first - days;
-
+  var rem = 42 - first - days;
   for (var j = 1; j <= rem; j++) {
-
-    html +=
-
-      '<div class="calcell faded">' +
-
-      '<div class="calnum">' +
-
-      j +
-
-      '</div></div>';
+    html += '<div class="calcell faded"><div class="calnum">' + j + '</div></div>';
   }
 
-  document.getElementById('cal-grid').innerHTML =
-    html;
+  document.getElementById('cal-grid').innerHTML = html;
 }
 function openStampRecord(si, pi, ri){
 
