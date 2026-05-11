@@ -1388,36 +1388,6 @@ function renderCal() {
     html;
 }
 
-  for (var d = 1; d <= days; d++) {
-    var ds = calY + '-' + String(calM + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-    var isToday = ds === td;
-    var recs = [];
-    db.shows.forEach(function(s, si) {
-      s.pads.forEach(function(p) {
-        (p.records || []).forEach(function(r) {
-          if (r.date === ds) recs.push({ r: r, s: s, si: si });
-        });
-      });
-    });
-    var posHtml = '';
-    if (recs.length) {
-      posHtml = '<div class="calposters">' + recs.map(function(item) {
-        var col = COLORS[item.si % COLORS.length];
-        return '<div class="calposter" style="background:' + col + ';">' +
-          item.s.name.slice(0, 3) + '<br>' + (item.r.time === 'night' ? '🌙' : '🌤') + '</div>';
-      }).join('') + '</div>';
-    }
-    html += '<div class="calcell' + (isToday ? ' today' : '') + '">' +
-      '<div class="calnum">' + d + '</div>' + posHtml + '</div>';
-  }
-
-  var rem = 42 - first - days;
-  for (var j = 1; j <= rem; j++) {
-    html += '<div class="calcell faded"><div class="calnum">' + j + '</div></div>';
-  }
-  document.getElementById('cal-grid').innerHTML = html;
-}
-
 // ════════════════════════════════════════
 // 혜택
 // ════════════════════════════════════════
