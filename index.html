@@ -1343,7 +1343,7 @@ function renderCal() {
 
       s.pads.forEach(function(p){
 
-        (p.records || []).forEach(function(r){
+        (p.records || []).forEach(function(r, ri){
 
           if(r.date !== ds) return;
           if(!r.calendar === false) return;
@@ -1412,10 +1412,11 @@ function renderCal() {
         '</div>';
     }
 
-    html +=
-
-      '<div class="calcell' +
-
+    html += '<div class="calcell' +
+(isToday ? ' today' : '') +
+  '" onclick="openCalEdit(' +
+  si + ',' + pi + ',' + ri +
+  ')">';
       (ds === td
         ? ' today'
         : '') +
@@ -1733,5 +1734,44 @@ initCal();
   </div>
 
 </div>
+  
+  function openCalEdit(si, pi, ri){
+
+  const s = db.shows[si];
+  const p = s.pads[pi];
+  const r = p.records[ri];
+
+  if(!r) return;
+
+  const newTime = prompt('회차 (day / night)', r.time);
+  if(newTime === null) return;
+
+  const newMulti = prompt('적립 (1=일반 / 2=더블 / 3=트리플)', r.multi);
+  if(newMulti === null) return;
+const del = confirm('이 기록 삭제할까?');
+
+if(del){
+
+  db.shows[si]
+    .pads[pi]
+    .records
+    .splice(ri, 1);
+
+  save();
+
+  initCal();
+  renderShowSc();
+
+  return;
+}
+  r.time = newTime;
+  r.multi = Number(newMulti);
+
+  save();
+
+  initCal();
+  renderShowSc();
+}
+  
 </body>
 </html>
