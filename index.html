@@ -1392,10 +1392,9 @@ function renderCal() {
       posHtml =
         '<div class="calposters">' +
 
-        recs.map(function(item){
-<div class="calposter"
-                 style="background:${item.color};"
-  onclick="openCalEdit(${item.si},${item.pi},${item.ri})">
+       recs.map(function(item){
+  return '<div class="calposter" style="background:'+item.color+';" onclick="openCalEdit('+item.si+','+item.pi+','+item.ri+')"></div>';
+})
           return `
 
             <div
