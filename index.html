@@ -1362,7 +1362,10 @@ function renderCal() {
               color:
                 COLORS[
                   db.shows.indexOf(s) % COLORS.length
-                ]
+                ], // ⭐ 추가 (핵심)
+  si: si,
+  pi: pi,
+  ri: ri
             };
           }
         });
@@ -1390,7 +1393,10 @@ function renderCal() {
         '<div class="calposters">' +
 
         recs.map(function(item){
-
+<div class="calposter"
+                 style="background:${item.color};"
+  onclick="openCalEdit(${item.si},${item.pi},${item.ri})"
+>
           return `
 
             <div
@@ -1733,7 +1739,7 @@ initCal();
   </div>
 
 </div>
-  
+  <script>
   function openCalEdit(si, pi, ri){
 
   const s = db.shows[si];
@@ -1742,35 +1748,27 @@ initCal();
 
   if(!r) return;
 
+  const del = confirm('삭제할까?');
+  if(del){
+    p.records.splice(ri, 1);
+    save();
+    initCal();
+    renderShowSc();
+    return;
+  }
+
   const newTime = prompt('회차 (day / night)', r.time);
   if(newTime === null) return;
 
-  const newMulti = prompt('적립 (1=일반 / 2=더블 / 3=트리플)', r.multi);
+  const newMulti = prompt('적립 (1/2/3)', r.multi);
   if(newMulti === null) return;
-const del = confirm('이 기록 삭제할까?');
 
-if(del){
-
-  db.shows[si]
-    .pads[pi]
-    .records
-    .splice(ri, 1);
-
-  save();
-
-  initCal();
-  renderShowSc();
-
-  return;
-}
   r.time = newTime;
   r.multi = Number(newMulti);
 
   save();
-
   initCal();
   renderShowSc();
 }
-  
 </body>
 </html>
